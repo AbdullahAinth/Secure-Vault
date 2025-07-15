@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import UnlockScreen from "./components/UnlockScreen";
+import SetupScreen from "./components/SetupScreen";
 import VaultDashboard from "./components/VaultDashboard";
 import Toast from "./components/Toast";
-import { deriveKey, encryptData, decryptData } from "./utils/crypto";
+import { deriveKey, encryptData, decryptData, hashPassword } from "./utils/crypto";
 import {
   getEncryptedVault,
   saveEncryptedVault
@@ -16,12 +17,19 @@ import "./styles.css";
 
 function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
+  const [isSetup, setIsSetup] = useState(false);
   const [derivedKey, setDerivedKey] = useState(null);
   const [notes, setNotes] = useState([]);
   const [passwords, setPasswords] = useState([]);
   const [files, setFiles] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
   const autoLockTimeout = useRef(null);
+
+  // Check setup state on load
+  useEffect(() => {
+    const storedHash = localStorage.getItem("vault-hash");
+    setIsSetup(!!storedHash); // true if hash exists
+  }, []);
 
   const resetAutoLockTimer = () => {
     if (autoLockTimeout.current) {
@@ -59,7 +67,22 @@ function App() {
     };
   }, [isUnlocked]);
 
+  const handleCreatePassword = async (password) => {
+    const hash = await hashPassword(password);
+    localStorage.setItem("vault-hash", hash);
+    setIsSetup(true);
+    showToast("Master password created!");
+  };
+
   const unlockVault = async (password) => {
+    const inputHash = await hashPassword(password);
+    const storedHash = localStorage.getItem("vault-hash");
+
+    if (inputHash !== storedHash) {
+      showToast("Incorrect master password.");
+      return;
+    }
+
     const key = await deriveKey(password);
     try {
       const storedNotes = await getEncryptedVault(key, "notes");
@@ -149,7 +172,9 @@ function App() {
 
   return (
     <div className="App">
-      {isUnlocked ? (
+      {!isSetup ? (
+        <SetupScreen onCreatePassword={handleCreatePassword} />
+      ) : isUnlocked ? (
         <VaultDashboard
           notes={notes}
           passwords={passwords}
@@ -161,13 +186,12 @@ function App() {
           onDeletePassword={handleDeletePassword}
           onAddFile={handleAddFile}
           onDeleteFile={handleDeleteFile}
-          showToast={showToast} // pass to VaultDashboard if needed
+          showToast={showToast}
         />
       ) : (
         <UnlockScreen onUnlock={unlockVault} />
       )}
 
-      {/* ✅ Corrected toast rendering */}
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage("")} />
       )}

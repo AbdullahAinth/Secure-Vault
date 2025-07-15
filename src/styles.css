@@ -36,6 +36,35 @@ body {
     border-radius: 8px;
     border: none;
   }
+  .unlock-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .unlock-input {
+    padding: 14px;
+    font-size: 18px;
+    width: 320px;
+    border-radius: 8px;
+    border: none;
+  }
+  
+  .unlock-btn {
+    padding: 12px 26px;
+    font-size: 16px;
+    background-color: #00bcd4;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .unlock-btn:hover {
+    background-color: #0097a7;
+  }
   
   .unlock-screen button {
     padding: 12px 26px;

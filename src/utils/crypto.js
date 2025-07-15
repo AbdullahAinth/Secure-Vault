@@ -1,7 +1,9 @@
+// src/utils/crypto.js
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-// Derive key from master password using PBKDF2
+// 🔑 Derive encryption key from master password
 export async function deriveKey(password, salt = "vault-salt") {
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -25,7 +27,7 @@ export async function deriveKey(password, salt = "vault-salt") {
   );
 }
 
-// Encrypt data
+// 🔒 Encrypt vault data
 export async function encryptData(data, key) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = encoder.encode(JSON.stringify(data));
@@ -41,7 +43,7 @@ export async function encryptData(data, key) {
   });
 }
 
-// Decrypt data
+// 🔓 Decrypt vault data
 export async function decryptData(encryptedStr, key) {
   const { iv, ciphertext } = JSON.parse(encryptedStr);
   const decrypted = await crypto.subtle.decrypt(
@@ -50,4 +52,15 @@ export async function decryptData(encryptedStr, key) {
     new Uint8Array(ciphertext)
   );
   return JSON.parse(decoder.decode(decrypted));
+}
+
+// 🔐 Hash master password using SHA-256
+export async function hashPassword(password) {
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    encoder.encode(password)
+  );
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
