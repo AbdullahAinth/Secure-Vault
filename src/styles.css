@@ -272,3 +272,18 @@ body {
     color: white;
   }
   
+  .reset-btn {
+    margin-top: 10px;
+    background-color: #444;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  .reset-btn:hover {
+    background-color: #666;
+  }
+  

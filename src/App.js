@@ -1,18 +1,24 @@
-// src/App.js
 import React, { useState, useEffect, useRef } from "react";
 import UnlockScreen from "./components/UnlockScreen";
 import VaultDashboard from "./components/VaultDashboard";
 import SetupScreen from "./components/SetupScreen";
 import Toast from "./components/Toast";
-import { deriveKey, encryptData, decryptData, hashPassword } from "./utils/crypto";
+import Modal from "./components/Modal";
+import {
+  deriveKey,
+  encryptData,
+  decryptData,
+  hashPassword,
+} from "./utils/crypto";
 import {
   getEncryptedVault,
-  saveEncryptedVault
+  saveEncryptedVault,
 } from "./utils/storage";
 import {
   saveEncryptedFile,
   getAllFiles,
-  deleteFile
+  deleteFile,
+  clearAllFiles,
 } from "./utils/db";
 import "./styles.css";
 
@@ -24,22 +30,18 @@ function App() {
   const [files, setFiles] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
   const [isFirstTime, setIsFirstTime] = useState(false);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const modalContentRef = useRef(null);
   const autoLockTimeout = useRef(null);
 
   useEffect(() => {
     const storedHash = localStorage.getItem("vaultPasswordHash");
-    if (!storedHash) {
-      setIsFirstTime(true);
-    }
+    if (!storedHash) setIsFirstTime(true);
   }, []);
 
   const resetAutoLockTimer = () => {
-    if (autoLockTimeout.current) {
-      clearTimeout(autoLockTimeout.current);
-    }
-    autoLockTimeout.current = setTimeout(() => {
-      handleAutoLock();
-    }, 5 * 60 * 1000);
+    if (autoLockTimeout.current) clearTimeout(autoLockTimeout.current);
+    autoLockTimeout.current = setTimeout(handleAutoLock, 5 * 60 * 1000);
   };
 
   const handleAutoLock = () => {
@@ -53,18 +55,11 @@ function App() {
 
   useEffect(() => {
     if (!isUnlocked) return;
-
     const events = ["mousemove", "keydown", "click"];
-    events.forEach((event) =>
-      document.addEventListener(event, resetAutoLockTimer)
-    );
-
+    events.forEach((e) => document.addEventListener(e, resetAutoLockTimer));
     resetAutoLockTimer();
-
     return () => {
-      events.forEach((event) =>
-        document.removeEventListener(event, resetAutoLockTimer)
-      );
+      events.forEach((e) => document.removeEventListener(e, resetAutoLockTimer));
       clearTimeout(autoLockTimeout.current);
     };
   }, [isUnlocked]);
@@ -72,14 +67,9 @@ function App() {
   const unlockVault = async (password) => {
     const inputHash = await hashPassword(password);
     const storedHash = localStorage.getItem("vaultPasswordHash");
-
-    if (inputHash !== storedHash) {
-      showToast("Invalid password.");
-      return;
-    }
+    if (inputHash !== storedHash) return showToast("Invalid password.");
 
     const key = await deriveKey(password);
-
     try {
       const storedNotes = await getEncryptedVault(key, "notes");
       const storedPasswords = await getEncryptedVault(key, "passwords");
@@ -108,6 +98,38 @@ function App() {
     localStorage.setItem("vaultPasswordHash", hash);
     showToast("Master password set.");
     setIsFirstTime(false);
+  };
+
+  const handleResetMasterPassword = async (oldPassword, newPassword) => {
+    const storedHash = localStorage.getItem("vaultPasswordHash");
+    const inputOldHash = await hashPassword(oldPassword);
+    if (storedHash !== inputOldHash) return showToast("Incorrect current password.");
+
+    const oldKey = await deriveKey(oldPassword);
+    const newKey = await deriveKey(newPassword);
+    const newHash = await hashPassword(newPassword);
+
+    try {
+      const storedNotes = await getEncryptedVault(oldKey, "notes");
+      const storedPasswords = await getEncryptedVault(oldKey, "passwords");
+      const encryptedFiles = await getAllFiles();
+
+      await saveEncryptedVault(newKey, "notes", storedNotes || []);
+      await saveEncryptedVault(newKey, "passwords", storedPasswords || []);
+      await clearAllFiles();
+
+      for (const file of encryptedFiles) {
+        const decrypted = await decryptData(file.encrypted, oldKey);
+        const reEncrypted = await encryptData(decrypted, newKey);
+        await saveEncryptedFile({ name: file.name, encrypted: reEncrypted });
+      }
+
+      localStorage.setItem("vaultPasswordHash", newHash);
+      showToast("Master password updated.");
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to re-encrypt data.");
+    }
   };
 
   const handleAddNote = (newNote) => {
@@ -192,7 +214,43 @@ function App() {
           showToast={showToast}
         />
       ) : (
-        <UnlockScreen onUnlock={unlockVault} />
+        <UnlockScreen
+          onUnlock={unlockVault}
+          onReset={() => setResetModalOpen(true)}
+        />
+      )}
+
+      {resetModalOpen && (
+        <Modal
+          title="Reset Master Password"
+          isOpen={resetModalOpen}
+          onCancel={() => setResetModalOpen(false)}
+          onSave={async () => {
+            const formEl = modalContentRef.current;
+            if (!formEl) return;
+            const oldPass = formEl.querySelector("#old-pass")?.value;
+            const newPass = formEl.querySelector("#new-pass")?.value;
+            if (!oldPass || !newPass) return showToast("Fill both fields.");
+            await handleResetMasterPassword(oldPass, newPass);
+            setResetModalOpen(false);
+          }}
+          content={
+            <div ref={modalContentRef}>
+              <input
+                id="old-pass"
+                type="password"
+                placeholder="Current password"
+                style={{ marginBottom: "0.5rem", width: "100%" }}
+              />
+              <input
+                id="new-pass"
+                type="password"
+                placeholder="New password"
+                style={{ width: "100%" }}
+              />
+            </div>
+          }
+        />
       )}
 
       {toastMessage && (

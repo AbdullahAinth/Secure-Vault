@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import "../styles.css";
 
-const UnlockScreen = ({ onUnlock }) => {
+const UnlockScreen = ({ onUnlock, onReset }) => {
   const [password, setPassword] = useState("");
 
   const handleSubmit = (e) => {
@@ -26,6 +26,13 @@ const UnlockScreen = ({ onUnlock }) => {
         />
         <button type="submit" className="unlock-btn">
           Unlock
+        </button>
+        <button
+          type="button"
+          className="reset-btn"
+          onClick={onReset}
+        >
+          Reset Master Password
         </button>
       </form>
     </div>

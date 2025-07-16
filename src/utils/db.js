@@ -1,3 +1,4 @@
+// src/utils/db.js
 const DB_NAME = "SecureVaultDB";
 const STORE_NAME = "files";
 
@@ -45,5 +46,16 @@ export async function deleteFile(id) {
     const request = store.delete(id);
     request.onsuccess = () => resolve(true);
     request.onerror = () => reject("Delete error");
+  });
+}
+
+export async function clearAllFiles() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.clear();
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => reject("Clear error");
   });
 }
