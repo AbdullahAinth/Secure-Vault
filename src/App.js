@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import UnlockScreen from "./components/UnlockScreen";
 import VaultDashboard from "./components/VaultDashboard";
 import SetupScreen from "./components/SetupScreen";
@@ -39,10 +39,11 @@ function App() {
     if (!storedHash) setIsFirstTime(true);
   }, []);
 
-  const resetAutoLockTimer = () => {
+  const resetAutoLockTimer = useCallback(() => {
     if (autoLockTimeout.current) clearTimeout(autoLockTimeout.current);
     autoLockTimeout.current = setTimeout(handleAutoLock, 5 * 60 * 1000);
-  };
+  }, []);
+  
 
   const handleAutoLock = () => {
     setToastMessage("Vault locked due to inactivity.");
@@ -62,7 +63,8 @@ function App() {
       events.forEach((e) => document.removeEventListener(e, resetAutoLockTimer));
       clearTimeout(autoLockTimeout.current);
     };
-  }, [isUnlocked]);
+  }, [isUnlocked, resetAutoLockTimer]); // <- include it here
+  
 
   const unlockVault = async (password) => {
     const inputHash = await hashPassword(password);
@@ -235,21 +237,26 @@ function App() {
             setResetModalOpen(false);
           }}
           content={
-            <div ref={modalContentRef}>
-              <input
-                id="old-pass"
-                type="password"
-                placeholder="Current password"
-                style={{ marginBottom: "0.5rem", width: "100%" }}
-              />
-              <input
-                id="new-pass"
-                type="password"
-                placeholder="New password"
-                style={{ width: "100%" }}
-              />
+            <div ref={modalContentRef} className="reset-form">
+              <div className="form-group">
+                <label htmlFor="old-pass">Current Password</label>
+                <input
+                  id="old-pass"
+                  type="password"
+                  placeholder="Enter current password"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="new-pass">New Password</label>
+                <input
+                  id="new-pass"
+                  type="password"
+                  placeholder="Enter new password"
+                />
+              </div>
             </div>
           }
+          
         />
       )}
 

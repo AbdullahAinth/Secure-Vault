@@ -286,4 +286,33 @@ body {
   .reset-btn:hover {
     background-color: #666;
   }
+  .modal label {
+    font-size: 14px;
+    color: #ccc;
+    display: block;
+    margin-top: 10px;
+  }
+  .reset-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .reset-form .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .reset-form label {
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #ccc;
+  }
+  
+  .reset-form input {
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 16px;
+  }
   
