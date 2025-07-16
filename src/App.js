@@ -1,7 +1,8 @@
+// src/App.js
 import React, { useState, useEffect, useRef } from "react";
 import UnlockScreen from "./components/UnlockScreen";
-import SetupScreen from "./components/SetupScreen";
 import VaultDashboard from "./components/VaultDashboard";
+import SetupScreen from "./components/SetupScreen";
 import Toast from "./components/Toast";
 import { deriveKey, encryptData, decryptData, hashPassword } from "./utils/crypto";
 import {
@@ -17,18 +18,19 @@ import "./styles.css";
 
 function App() {
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [isSetup, setIsSetup] = useState(false);
   const [derivedKey, setDerivedKey] = useState(null);
   const [notes, setNotes] = useState([]);
   const [passwords, setPasswords] = useState([]);
   const [files, setFiles] = useState([]);
   const [toastMessage, setToastMessage] = useState("");
+  const [isFirstTime, setIsFirstTime] = useState(false);
   const autoLockTimeout = useRef(null);
 
-  // Check setup state on load
   useEffect(() => {
-    const storedHash = localStorage.getItem("vault-hash");
-    setIsSetup(!!storedHash); // true if hash exists
+    const storedHash = localStorage.getItem("vaultPasswordHash");
+    if (!storedHash) {
+      setIsFirstTime(true);
+    }
   }, []);
 
   const resetAutoLockTimer = () => {
@@ -67,23 +69,17 @@ function App() {
     };
   }, [isUnlocked]);
 
-  const handleCreatePassword = async (password) => {
-    const hash = await hashPassword(password);
-    localStorage.setItem("vault-hash", hash);
-    setIsSetup(true);
-    showToast("Master password created!");
-  };
-
   const unlockVault = async (password) => {
     const inputHash = await hashPassword(password);
-    const storedHash = localStorage.getItem("vault-hash");
+    const storedHash = localStorage.getItem("vaultPasswordHash");
 
     if (inputHash !== storedHash) {
-      showToast("Incorrect master password.");
+      showToast("Invalid password.");
       return;
     }
 
     const key = await deriveKey(password);
+
     try {
       const storedNotes = await getEncryptedVault(key, "notes");
       const storedPasswords = await getEncryptedVault(key, "passwords");
@@ -103,8 +99,15 @@ function App() {
       setIsUnlocked(true);
     } catch (e) {
       console.error(e);
-      showToast("Invalid password or corrupted data.");
+      showToast("Corrupted vault data.");
     }
+  };
+
+  const handleCreateMasterPassword = async (password) => {
+    const hash = await hashPassword(password);
+    localStorage.setItem("vaultPasswordHash", hash);
+    showToast("Master password set.");
+    setIsFirstTime(false);
   };
 
   const handleAddNote = (newNote) => {
@@ -167,13 +170,13 @@ function App() {
 
   const showToast = (message) => {
     setToastMessage(message);
-    setTimeout(() => setToastMessage(""), 3000); // auto-dismiss after 3 sec
+    setTimeout(() => setToastMessage(""), 3000);
   };
 
   return (
     <div className="App">
-      {!isSetup ? (
-        <SetupScreen onCreatePassword={handleCreatePassword} />
+      {isFirstTime ? (
+        <SetupScreen onCreatePassword={handleCreateMasterPassword} />
       ) : isUnlocked ? (
         <VaultDashboard
           notes={notes}
