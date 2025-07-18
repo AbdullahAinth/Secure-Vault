@@ -114,12 +114,11 @@ const VaultDashboard = ({
   return (
     <div className="vault-dashboard">
       <h2>🔐 Your Vault</h2>
-
       <div className="tabs">
         {["notes", "passwords", "files", "tools"].map((tab) => (
           <button
             key={tab}
-            className={activeTab === tab ? "active" : ""}
+            className={`tab-button ${activeTab === tab ? "active" : ""}`}
             onClick={() => setActiveTab(tab)}
           >
             {tab === "notes" && "📝 Notes"}
@@ -131,7 +130,7 @@ const VaultDashboard = ({
       </div>
 
       {activeTab === "notes" && (
-        <>
+        <div className="vault-section">
           <div className="note-input">
             <h3>📓 Add a Secure Note</h3>
             <textarea
@@ -139,35 +138,33 @@ const VaultDashboard = ({
               onChange={(e) => setNewNote(e.target.value)}
               placeholder="Type your secret note..."
             />
-            <button onClick={handleAddNote}>Add Note</button>
+            <button className="add-note-button" onClick={handleAddNote}>Add Note</button>
           </div>
 
-          <ul className="note-list">
+          <div className="vault-cards">
             {notes?.length > 0 ? (
               notes.map((note, idx) => (
-                <li key={idx}>
-                  <div className="note-text">{note.text}</div>
-                  <div className="note-actions">
-                    <button onClick={() => openEditModal(idx)}>Edit</button>
+                <div key={idx} className="card">
+                  <div className="card-body">{note.text}</div>
+                  <div className="card-buttons">
+                    <button className="edit-button" onClick={() => openEditModal(idx)}>✏️</button>
                     <button onClick={() => {
                       onDeleteNote(idx);
                       showToast("Note deleted");
-                    }}>
-                      Delete
-                    </button>
+                    }}>🗑️</button>
                   </div>
-                </li>
+                </div>
               ))
             ) : (
-              <li>No notes saved yet.</li>
+              <p>No notes saved yet.</p>
             )}
-          </ul>
-        </>
+          </div>
+        </div>
       )}
 
       {activeTab === "passwords" && (
-        <>
-          <div className="note-input">
+        <div className="vault-section">
+          <div className="note-input add-password-form">
             <h3>🔑 Add a Password</h3>
             <input
               type="text"
@@ -196,17 +193,17 @@ const VaultDashboard = ({
             <button onClick={handleAddPassword}>Add Password</button>
           </div>
 
-          <ul className="note-list">
+          <div className="vault-cards">
             {passwords?.length > 0 ? (
               passwords.map((entry, idx) => (
-                <li key={idx}>
-                  <strong>{entry.title}</strong>
+                <div key={idx} className="card">
+                  <div><strong>{entry.title}</strong></div>
 
                   <div className="field-row">
                     <span>
                       <strong>User:</strong> {visiblePasswords[`user-${idx}`] ? entry.username : "••••••••"}
                     </span>
-                    <div className="inline-actions">
+                    <div className="card-buttons">
                       <button
                         className="eye-icon"
                         onClick={() => togglePasswordVisibility(`user-${idx}`)}
@@ -215,7 +212,7 @@ const VaultDashboard = ({
                         {visiblePasswords[`user-${idx}`] ? "🙈" : "👁️"}
                       </button>
                       <button
-                        className="copy-btn"
+                        className="copy-button"
                         onClick={() => copyToClipboard(entry.username)}
                         title="Copy username"
                       >
@@ -228,7 +225,7 @@ const VaultDashboard = ({
                     <span>
                       <strong>Password:</strong> {visiblePasswords[`pass-${idx}`] ? entry.password : "••••••••"}
                     </span>
-                    <div className="inline-actions">
+                    <div className="card-buttons">
                       <button
                         className="eye-icon"
                         onClick={() => togglePasswordVisibility(`pass-${idx}`)}
@@ -237,7 +234,7 @@ const VaultDashboard = ({
                         {visiblePasswords[`pass-${idx}`] ? "🙈" : "👁️"}
                       </button>
                       <button
-                        className="copy-btn"
+                        className="copy-button"
                         onClick={() => copyToClipboard(entry.password)}
                         title="Copy password"
                       >
@@ -246,53 +243,51 @@ const VaultDashboard = ({
                     </div>
                   </div>
 
-                  <div className="note-actions">
+                  <div className="card-buttons">
                     <button onClick={() => {
                       onDeletePassword(idx);
                       showToast("Password deleted");
-                    }}>
-                      Delete
-                    </button>
+                    }}>🗑️</button>
                   </div>
-                </li>
+                </div>
               ))
             ) : (
-              <li>No passwords saved yet.</li>
+              <p>No passwords saved yet.</p>
             )}
-          </ul>
-        </>
+          </div>
+        </div>
       )}
 
       {activeTab === "files" && (
-        <>
+        <div className="vault-section">
           <div className="note-input">
             <h3>📁 Add a File</h3>
             <input type="file" onChange={handleFileChange} />
           </div>
 
-          <ul className="note-list">
+          <div className="vault-cards">
             {files?.length > 0 ? (
               files.map((file, idx) => (
-                <li key={idx}>
+                <div key={idx} className="card">
                   <div>{file.name}</div>
-                  <div className="note-actions">
+                  <div className="card-buttons">
                     <button onClick={() => handleFileDownload(file)}>
-                      Download
+                      ⬇️
                     </button>
                     <button onClick={() => {
                       onDeleteFile(file.id);
                       showToast("File deleted");
                     }}>
-                      Delete
+                      🗑️
                     </button>
                   </div>
-                </li>
+                </div>
               ))
             ) : (
-              <li>No files uploaded yet.</li>
+              <p>No files uploaded yet.</p>
             )}
-          </ul>
-        </>
+          </div>
+        </div>
       )}
 
       {activeTab === "tools" && (

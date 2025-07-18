@@ -1,4 +1,3 @@
-// src/components/UnlockScreen.jsx
 import React, { useState } from "react";
 import "../styles.css";
 
@@ -7,34 +6,29 @@ const UnlockScreen = ({ onUnlock, onReset }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (password.trim()) {
-      onUnlock(password);
-      setPassword("");
-    }
+    onUnlock(password);
   };
 
   return (
     <div className="unlock-screen">
-      <h2>🔐 Unlock Your Vault</h2>
-      <form onSubmit={handleSubmit} className="unlock-form">
-        <input
-          type="password"
-          placeholder="Enter master password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="unlock-input"
-        />
-        <button type="submit" className="unlock-btn">
-          Unlock
-        </button>
-        <button
-          type="button"
-          className="reset-btn"
-          onClick={onReset}
-        >
+      <div className="unlock-container">
+        <h2 className="vault-heading">🔐 Unlock Your Vault</h2>
+        <form onSubmit={handleSubmit} className="unlock-form">
+          <input
+            type="password"
+            placeholder="Enter master password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="unlock-input"
+          />
+          <button type="submit" className="neon-unlock-button">
+            Unlock
+          </button>
+        </form>
+        <button className="reset-button" onClick={onReset}>
           Reset Master Password
         </button>
-      </form>
+      </div>
     </div>
   );
 };
